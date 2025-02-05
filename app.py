@@ -1,39 +1,46 @@
 import streamlit as st
-
-st.title("StoreIQ - Proof of Concept")
-st.write("Hei, verden! Dette er min første Streamlit-app i skyen.")
-
 import requests
+import pandas as pd
 
-st.title("StoreIQ - WooCommerce Demo")
-
-# Eksempel på en funksjon for å hente ordre
 def fetch_woocommerce_orders():
-    base_url = st.secrets["woo"]["base_url"]
+    base_url = st.secrets["woo"]["base_url"]  # f.eks. "https://nettside.no/wp-json/wc/v3"
     ck = st.secrets["woo"]["consumer_key"]
     cs = st.secrets["woo"]["consumer_secret"]
 
-    # WooCommerce API-endepunkt for ordrer
     endpoint = f"{base_url}/orders"
-
-    # Her definerer vi parametere, for eksempel antall ordrer per side
     params = {
         "per_page": 10  # henter 10 ordrer
     }
 
-    # Legger ved auth i requests (WooCommerce krever basic auth med ck/cs)
     response = requests.get(endpoint, params=params, auth=(ck, cs))
-    response.raise_for_status()  # kaster feil hvis status != 200
+    response.raise_for_status()
+    return response.json()  # en liste med ordredikt
 
-    data = response.json()  # dette er en liste med ordre-dict
-    return data
+st.title("StoreIQ - WooCommerce Orders")
 
-# Legger til en knapp i Streamlit for å trigge datainnhenting
 if st.button("Hent ordre fra WooCommerce"):
     try:
         orders = fetch_woocommerce_orders()
         st.write(f"Fant {len(orders)} ordre.")
-        # Vi kan vise ordredetaljer
-        st.json(orders)  # Viser JSON i en utvidbar boks
+
+        # Bygg en liste av dicts som blir til en tabell
+        data_rows = []
+        for order in orders:
+            order_number = order["number"]  # "number" er ofte det "synlige" ordrenummeret
+            first_name = order["billing"]["first_name"]
+            last_name = order["billing"]["last_name"]
+            total = order["total"]  # Merk: ofte en streng. Du kan evt. konvertere til float
+
+            data_rows.append({
+                "Order Number": order_number,
+                "Customer Name": f"{first_name} {last_name}",
+                "Total Amount": total
+            })
+
+        # Lag en DataFrame av dataene
+        df = pd.DataFrame(data_rows)
+
+        # Vis tabellen i Streamlit
+        st.dataframe(df)
     except Exception as e:
         st.error(f"Noe gikk galt: {e}")
