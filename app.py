@@ -125,4 +125,12 @@ if st.session_state["df_line_items"] is not None:
             result = analyze_line_items_with_gpt(df_lines)
             st.session_state["analysis_result"] = result
             st.success("Analyse ferdig!")
-        except 
+        except Exception as e:
+            st.error(f"Feil ved analyse: {e}")
+
+    # Viser eventuelt siste analyse
+    if st.session_state["analysis_result"]:
+        st.subheader("ChatGPT-analyse:")
+        st.write(st.session_state["analysis_result"])
+else:
+    st.info("Ingen ordrelinjer å vise. Klikk 'Hent ordrelinjer' først.")
