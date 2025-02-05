@@ -33,4 +33,39 @@ def flatten_orders_to_lineitems(orders, max_lines=100):
         for item in line_items:
             product_name = item["name"]
             quantity = item["quantity"]
-            # Ofte er "total" en streng. Vi kan konvertere til float for klar
+            # Ofte er "total" en streng. Vi kan konvertere til float for klarhet:
+            line_total = float(item["total"])
+
+            row = {
+                "Order Number": order_number,
+                "Customer Name": customer_name,
+                "Product Name": product_name,
+                "Quantity": quantity,
+                "Line Total": line_total
+            }
+            flattened_rows.append(row)
+
+            # Hvis vi kun skal vise maks 'max_lines' linjer, kan vi stoppe her
+            if len(flattened_rows) >= max_lines:
+                break
+        if len(flattened_rows) >= max_lines:
+            break
+
+    return flattened_rows
+
+st.title("StoreIQ - WooCommerce Line Items")
+
+if st.button("Hent ordrelinjer"):
+    try:
+        orders = fetch_woocommerce_orders()
+        # Flatten: lager en liste med "linjer" istedenfor "ordrer"
+        line_data = flatten_orders_to_lineitems(orders, max_lines=100)
+
+        if len(line_data) == 0:
+            st.write("Ingen ordrelinjer funnet.")
+        else:
+            df = pd.DataFrame(line_data)
+            st.write(f"Viser {len(df)} ordrelinjer (max 100).")
+            st.dataframe(df)
+    except Exception as e:
+        st.error(f"Noe gikk galt: {e}")
